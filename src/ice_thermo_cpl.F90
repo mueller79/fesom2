@@ -241,7 +241,9 @@ contains
     !---- this rate to be 10 meters per day. NOTE: tau0 should be
     !---- significantly greater than the time step dt
     real(kind=WP), parameter :: gamma_t = 10./86400.
-
+    
+    !---- freezing temperature of freshwater [deg C]
+    real(kind=WP), parameter :: Tfrez0 = 0.
 
     !---- freezing temperature of sea-water [deg C]
     real(kind=WP)  :: Tfrezs
