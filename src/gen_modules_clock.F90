@@ -95,6 +95,9 @@ contains
     else
        r_restart=.true.
     end if
+!   For simulations with transient tracer input data
+    if (use_transit) ti_transit = yearnew - yearstart + ti_start_transit
+
 
     ! year as character string 
     write(cyearold,'(i4)') yearold
