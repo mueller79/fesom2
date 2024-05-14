@@ -291,8 +291,9 @@ contains
 
   subroutine fesom_runloop(current_nsteps)
     use fesom_main_storage_module
+    use g_support
     integer, intent(in) :: current_nsteps 
-    real(kind=WP)       :: hSv, fw0
+    real(kind=WP)       :: hSv, fw0, XX, YY
     ! EO parameters
     integer n
 
@@ -362,12 +363,21 @@ contains
             call oce_fluxes_mom(f%ice, f%dynamics, f%partit, f%mesh) ! momentum only
             call oce_fluxes(f%ice, f%dynamics, f%tracers, f%partit, f%mesh)
             !___add freshwater anomaly for hosing experiments___________________
+            !1992-2020 hosing experiment increasing 1.1*10^-3 Sv
+            !if (yearnew<1992) then
+            !    fw0 = 0.0
+            !    hSv = 0.0 
+            !else
+            !    fw0 = 0.0011*(yearnew-1992)
+            !    hSv = fw0 + (0.0011/f%total_nsteps)*n
+            !endif
+            !1992-2020 hosing experiment 0.1 constant Sv
             if (yearnew<1992) then
-                fw0 = 0.0
+                hSv = 0.0
             else
-                fw0 = 0.0011*(yearnew-1992)
+                hSv = 1 !0.1
             endif
-            hSv = fw0 + (0.0011/f%total_nsteps)*n
+            !write(*,*) 'year:',yearnew, ' fwo:',fw0, 'step:',n, ' hSv:',hSv, ' total steps:',f%total_nsteps
             call fw_forcing(hSv, f%partit, f%mesh)
         end if
         call before_oce_step(f%dynamics, f%tracers, f%partit, f%mesh) ! prepare the things if required
@@ -376,6 +386,10 @@ contains
         !___model ocean step____________________________________________________
         if (flag_debug .and. f%mype==0)  print *, achar(27)//'[34m'//' --> call oce_timestep_ale'//achar(27)//'[0m'
         call oce_timestep_ale(n, f%ice, f%dynamics, f%tracers, f%partit, f%mesh)
+        call integrate_nod(f%tracers%data(3)%values(:,:), XX, f%partit, f%mesh)
+        If (f%partit%mype==0) write(*,*) 'STEP / Passive tracer volume=', n, XX
+        !call integrate_nod(hosing_flux%values(:), YY, f%partit, f%mesh)
+        !If (f%partit%mype==0) write(*,*) 'STEP / Hosing freshwater volume=', n, YY 
 
         f%t3 = MPI_Wtime()
         !___compute energy diagnostics..._______________________________________
