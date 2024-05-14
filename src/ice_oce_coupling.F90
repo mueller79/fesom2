@@ -600,32 +600,28 @@ subroutine fw_forcing(hSv, partit, mesh) !coordinates in the format [-180 180 -9
     type(t_mesh),   intent(in),    target :: mesh
     real(kind=WP),  intent(in)            :: hSv
     real(kind=WP)                         :: x, y, net
-    real(kind=WP), allocatable            :: flux(:)
     integer                               :: n, ed(2)
 #include "associate_part_def.h"
 #include "associate_mesh_def.h"
 #include "associate_part_ass.h"
 #include "associate_mesh_ass.h"
-     allocate(flux(myDim_nod2D+eDim_nod2D))
+     hosing_flux=0._WP
 
      do n=1, myDim_edge2D
-        flux(n)=0._WP
         ed=mesh%edges(:, n)
         if (myList_edge2D(n) <= mesh%edge2D_in) cycle
                 y = sum(geo_coord_nod2D(2,ed))/2._WP/rad
-        if (y<-60._WP) flux(ed)=1._WP
+        if (y<-60._WP) hosing_flux(ed)=1._WP
      end do
 
-!    call smooth_nod (flux, 5, partit, mesh)
+!    call smooth_nod (hosing_flux, 5, partit, mesh)
 
-     call integrate_nod(flux, net, partit, mesh)
+     call integrate_nod(hosing_flux, net, partit, mesh)
 
      if (abs(net)>1.e-6) then
-        flux=flux/net*hSv*1.e6 ! hSv*1.e6 in m/s
+        hosing_flux=hosing_flux/net*hSv*1.e6 ! hSv*1.e6 in m/s
      end if
-     water_flux=water_flux-flux
-     
-     deallocate(flux)
+     water_flux=water_flux-hosing_flux
 
 end subroutine fw_forcing
 
